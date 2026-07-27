@@ -1,4 +1,4 @@
-package com.mrhwsn.composelock
+package io.github.elnix90.lock
 
 import android.util.Range
 import android.view.MotionEvent

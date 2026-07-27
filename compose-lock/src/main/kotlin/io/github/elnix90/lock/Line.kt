@@ -1,4 +1,4 @@
-package com.mrhwsn.composelock
+package io.github.elnix90.lock
 
 import androidx.compose.ui.geometry.Offset
 

@@ -1,4 +1,4 @@
-package com.mrhwsn.composelock
+package io.github.elnix90.lock
 
 public interface ComposeLockCallback {
     public fun onStart(dot: Dot)
