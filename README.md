@@ -52,25 +52,6 @@ dependencies {
     implementation(libs.settings.runtime)
 }
 ```
-
-## Installation
-
-Add the JitPack repository to your build.gradle file
-
-```gradle
-allprojects {
-    repositories {
-        ...
-        maven { url 'https://jitpack.io' }
-    }
-}
-```
-Add Compose Lock to the dependency
-```gradle
-dependencies {
-    implementation 'implementation 'com.github.AbyssSpecter:ComposeLock:1.0.0'
-}
-```
     
 ## Setup
 
