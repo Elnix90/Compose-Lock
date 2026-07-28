@@ -2,8 +2,10 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "*.kt"
-      - "*.kts"
+      - 'build.gradle**'
+      - 'gradle/**'
+      - '**.kt'
+      - '**.kts'
 
 env:
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
