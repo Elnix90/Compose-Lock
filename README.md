@@ -8,15 +8,15 @@ This is not a fork as I don't plan to make PRs, but to maintain my own version
 
 # Compose Lock
 
-compose lock is a pattern lock library based on jetpack compose framework
+Compose lock is a pattern lock library based on jetpack compose framework
 
 ## Features
 
-- custom dimension
+- custom dimension (size of the pattern)
 - custom sensitivity
 - custom colors
 - custom animation duration
-- supporting any size
+- supporting any size (>= 2)
 
 ## Download
 
@@ -45,18 +45,9 @@ dependencies {
 }
 ```
 
-Then, in each module that has to use the settings as state:
-
-```kotlin
-dependencies {
-    // ...
-    implementation(libs.settings.runtime)
-}
-```
-
 ## Setup
 
-use ComposeLock fuction in composeable scope
+Use ComposeLock function in @Composable scope
 
 ```kotlin
 ComposeLock(
