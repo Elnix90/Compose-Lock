@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.elnix90.lock.pin.KeypadButton
 
-private val rows  = listOf(
+private val rows = listOf(
     listOf("1", "2", "3"),
     listOf("4", "5", "6"),
     listOf("7", "8", "9")

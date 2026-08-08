@@ -17,7 +17,7 @@ internal fun KeypadButton(
     icon: Int,
     tint: Color,
     enabled: Boolean = true,
-    onClick: (() -> Unit)? = null,
+    onClick: () -> Unit
 ) {
 
     Box(

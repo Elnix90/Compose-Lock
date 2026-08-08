@@ -27,7 +27,7 @@ import androidx.graphics.shapes.rectangle
 @Composable
 internal fun Modifier.keyPadModifier(
     enabled: Boolean = true,
-    onClick: (() -> Unit)? = null
+    onClick: () -> Unit
 ): Modifier {
 
     val interactionSource = remember { MutableInteractionSource() }
@@ -59,18 +59,11 @@ internal fun Modifier.keyPadModifier(
     return this
         .aspectRatio(1f)
         .clip(shape)
-        .then(
-            onClick?.let { click ->
-                Modifier.clickable(
-                    enabled = enabled,
-                    onClick = click,
-                    interactionSource = interactionSource
-                )
-            } ?: Modifier
+        .clickable(
+            enabled = enabled,
+            onClick = onClick,
+            interactionSource = interactionSource
         )
-        .background(MaterialTheme.colorScheme.surface)
-        .then(if (enabled) this else this.graphicsLayer {
-            alpha *= 0.5f
-        })
+        .background(MaterialTheme.colorScheme.surface.copy(if (enabled) 1f else 0.5f))
         .padding(15.dp)
 }
