@@ -2,21 +2,22 @@
   <img src="/Preview/ComposeLockBanner.png" width="100%"  />
 </p>
 
-## Cloned from https://github.com/therewasluna/compose-lock
-
-This is not a fork as I don't plan to make PRs, but to maintain my own version
-
 # Compose Lock
 
-Compose lock is a pattern lock library based on jetpack compose framework
+Compose lock offers a pattern lock library and a pin lock library, for jetpack compose framework
 
 ## Features
 
+### Pattern 
 - custom dimension (size of the pattern)
 - custom sensitivity
 - custom colors
 - custom animation duration
 - supporting any size (>= 2)
+
+### Pin
+- not much customization yet but if you want it, ask me I'll add them
+- I copied the code from my App Dragon Launcher
 
 ## Download
 
@@ -47,10 +48,10 @@ dependencies {
 
 ## Setup
 
-Use ComposeLock function in @Composable scope
+Use ComposeLock functions in @Composable scope
 
 ```kotlin
-ComposeLock(
+PatternLock(
     modifier = Modifier.fillMaxWidth(),
     dimension = 4,
     sensitivity = 100f,
@@ -74,6 +75,23 @@ ComposeLock(
             for (dot in result) connectedDots += "${dot.id}  "
             Toast.makeText(context, "result : $connectedDots", Toast.LENGTH_SHORT).show()
         }
+    }
+)
+
+
+PinLock(
+    modifier = Modifier.fillMaxWidth(),
+    onDigit = { digit ->
+        if (pinValue.length < maxDigits) {
+            onPinChanged(pinValue + digit)
+        }
+    },
+    validateEnabled = pinValue.length >= minDigits,
+    onValidate = onPrimaryAction,
+    backSpaceOrClose = pinValue.isNotEmpty(),
+    onClear = {
+        if (pinValue.isEmpty()) onDismiss()
+        else onPinChanged("")
     }
 )
 ```
@@ -117,4 +135,4 @@ echo YOUR_PASSWORD > creds/passwd.txt
 - Paste the username given to `creds/maven_username.txt`
 - Paste the password given to `creds/maven_password.txt`
 
-5. you can now publish to maven by using `./gradlew publish`
+5. you can now publish to maven by using `./gradlew publish` or triggering the workflow

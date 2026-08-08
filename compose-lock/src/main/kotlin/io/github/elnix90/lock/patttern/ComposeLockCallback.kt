@@ -1,4 +1,6 @@
-package io.github.elnix90.lock
+package io.github.elnix90.lock.patttern
+
+import io.github.elnix90.lock.Dot
 
 public interface ComposeLockCallback {
     public fun onStart(dot: Dot)

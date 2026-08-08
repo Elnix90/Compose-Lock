@@ -1,4 +1,4 @@
-package io.github.elnix90.lock
+package io.github.elnix90.lock.patttern
 
 import androidx.compose.ui.geometry.Offset
 

@@ -18,13 +18,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import io.github.elnix90.lock.patttern.ComposeLockCallback
+import io.github.elnix90.lock.patttern.Line
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-public fun ComposeLock(
+public fun PatternLock(
     modifier: Modifier = Modifier,
     dimension: Int,
     sensitivity: Float,
