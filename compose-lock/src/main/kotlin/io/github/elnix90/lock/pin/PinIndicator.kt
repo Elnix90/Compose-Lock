@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.RoundedPolygon
@@ -30,8 +31,9 @@ import kotlin.collections.lastIndex
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-public fun PinIndicator(
-    shapes: List<RoundedPolygon>
+public fun <T> PinIndicator(
+    shapes: List<T>,
+    toShape: (T) -> Shape
 ) {
     val scope = rememberCoroutineScope()
     val lazyState = rememberLazyListState()
@@ -69,7 +71,7 @@ public fun PinIndicator(
                     .graphicsLayer(scaleX = scale, scaleY = scale)
                     .background(
                         color = MaterialTheme.colorScheme.primary,
-                        shape = shape.toShape()
+                        shape = toShape(shape)
                     )
             )
         }
