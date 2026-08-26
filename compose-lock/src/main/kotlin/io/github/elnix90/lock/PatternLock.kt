@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -31,6 +32,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration.Companion.milliseconds
 
 private class PatternLockSystem(
@@ -48,32 +51,37 @@ private class PatternLockSystem(
     val connectedDotsIds = _connectedDotsIds.asStateFlow()
 
     private val dimension = patternLockOptions.dimension
-    private val sensitivity = with(density) {
-        patternLockOptions.sensitivity.toPx()
-    }
-    private val dotsSize = with(density) {
-        patternLockOptions.dotsSize.toPx()
-    }
+    private val sensitivity = with(density) { patternLockOptions.sensitivity.toPx() }
+    private val dotsSize = with(density) { patternLockOptions.dotsSize.toPx() }
 
+
+    private var hasInitialized = false
+    private val mutex = Mutex()
 
     fun init(layoutCoordinates: LayoutCoordinates) {
-        val width = layoutCoordinates.size.width
+        if (hasInitialized) return
+        scope.launch {
+            mutex.withLock {
+                val width = layoutCoordinates.size.width
 
-        val realDimension = dimension + 1
-        val spaceBetweenDots = (width / realDimension).toFloat()
+                val realDimension = dimension + 1
+                val spaceBetweenDots = (width / realDimension).toFloat()
 
-        repeat(dimension) { widthIndex ->
-            repeat(dimension) { heightIndex ->
-                val dotOffset = Offset(
-                    x = spaceBetweenDots * (widthIndex + 1),
-                    y = spaceBetweenDots * (heightIndex + 1)
-                )
+                repeat(dimension) { widthIndex ->
+                    repeat(dimension) { heightIndex ->
+                        val dotOffset = Offset(
+                            x = spaceBetweenDots * (widthIndex + 1),
+                            y = spaceBetweenDots * (heightIndex + 1)
+                        )
 
-                _dots.value += Dot(
-                    id = heightIndex * patternLockOptions.dimension + widthIndex,
-                    offset = dotOffset,
-                    size = Animatable(dotsSize)
-                )
+                        _dots.value += Dot(
+                            id = heightIndex * patternLockOptions.dimension + widthIndex,
+                            offset = dotOffset,
+                            size = Animatable(dotsSize)
+                        )
+                    }
+                }
+                hasInitialized = true
             }
         }
     }
@@ -133,7 +141,7 @@ public fun PatternLock(
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
 
-    val system = remember {
+    val system = remember(patternLockOptions) {
         PatternLockSystem(
             scope = scope + SupervisorJob(),
             patternLockOptions = patternLockOptions,
@@ -150,12 +158,14 @@ public fun PatternLock(
     Canvas(
         modifier
             .aspectRatio(1f)
-            .pointerInput(patternLockOptions.dimension) {
+            .pointerInput(patternLockOptions) {
                 detectDragGestures(
                     onDragStart = {},
                     onDragEnd = {
-                        system.clear()
-                        onFinished(connectedDotsIds.joinToString("") { it.toString() })
+                        if (connectedDotsIds.isNotEmpty()) {
+                            system.clear()
+                            onFinished(connectedDotsIds.joinToString("") { it.toString() })
+                        }
                     },
                     onDragCancel = {
                         system.clear()
@@ -188,10 +198,13 @@ public fun PatternLock(
             )
 
             if (patternLockOptions.showSensibility) {
-                drawCircle(
+                val sensiPx = patternLockOptions.sensitivity.toPx() * 2
+                val size = Size(sensiPx, sensiPx)
+
+                drawRect(
                     color = patternLockOptions.dotsColor.copy(0.5f),
-                    radius = patternLockOptions.sensitivity.toPx(),
-                    center = dot.offset
+                    topLeft = dot.offset - Offset(size.width / 2, size.height / 2),
+                    size = size
                 )
             }
         }
