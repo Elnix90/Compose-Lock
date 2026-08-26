@@ -1,29 +1,31 @@
-<p align="center">
-  <img src="/Preview/ComposeLockBanner.png" width="100%"  />
-</p>
-
 # Compose Lock
 
-Compose lock offers a pattern lock library and a pin lock library, for jetpack compose framework
+| Pattern                                                                                         | Pin                                                                                     |
+|-------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
+| ![Pattern](https://raw.githubusercontent.com/Elnix90/Compose-Lock/main/assets/pattern_demo.gif) | ![Pin](https://raw.githubusercontent.com/Elnix90/Compose-Lock/main/assets/pin_demo.gif) |
+
+Compose lock offers a **pattern lock library** and a **pin lock library**, for jetpack compose framework
 
 ## Features
 
-### Pattern 
-- custom dimension (size of the pattern)
-- custom sensitivity
-- custom colors
-- custom animation duration
-- supporting any size (>= 2)
+### Pattern
+- Custom dimension (size of the pattern)
+- Custom sensitivity
+- Custom colors
+- Custom animation duration
+- Supporting any size (>= 2) (dont be dumb lol)
 
 ### Pin
-- not much customization yet but if you want it, ask me I'll add them
-- I copied the code from my App Dragon Launcher
+- Inspired by Pixel Phones lock screen
+- Custom size
+- Custom colors
+- Hightly responsive with material 3 expressive theming
 
 ## Download
 
-![Maven Central Version](https://img.shields.io/maven-central/v/io.github.elnix90.lock/compose-lock)
+![Maven Central Version](https://img.shields.io/maven-central/v/io.github.elnix90.lock/compose-lock?style=for-the-badge)
 
-### Version Catalog
+### Setup - Version Catalog
 
 Configure the dependency by adding it to your `libs.versions.toml` file as follows:
 
@@ -46,63 +48,32 @@ dependencies {
 }
 ```
 
-## Setup
+## Usage
 
-Use ComposeLock functions in @Composable scope
+Use ComposeLock functions in `@Composable` scope
 
 ```kotlin
 PatternLock(
-    modifier = Modifier.fillMaxWidth(),
-    dimension = 4,
-    sensitivity = 100f,
-    dotsColor = Color.Black,
-    dotsSize = 20f,
-    linesColor = Color.Black,
-    linesStroke = 30f,
-    animationDuration = 200,
-    animationDelay = 100,
-    callback = object : ComposeLockCallback {
-        override fun onStart(dot: Dot) {
-            Toast.makeText(context, "start on dot with id : ${dot.id}", Toast.LENGTH_SHORT).show()
-        }
+    modifier = Modifier.padding(bottom = 80.dp),
+    patternLockOptions = PatternLockOptions.defaultPatternLockOptions.copy(
+        dimension = patternSize,
+        sensitivity = patternSensitivity,
+        showSensibility = showSensitivity
+    ),
+    onFinished = { patternString ->
 
-        override fun onDotConnected(dot: Dot) {
-            Toast.makeText(context, "dot connected with id : ${dot.id}", Toast.LENGTH_SHORT).show()
-        }
-
-        override fun onResult(result: List<Dot>) {
-            var connectedDots = ""
-            for (dot in result) connectedDots += "${dot.id}  "
-            Toast.makeText(context, "result : $connectedDots", Toast.LENGTH_SHORT).show()
-        }
-    }
+    },
 )
 
 
 PinLock(
-    modifier = Modifier.fillMaxWidth(),
-    onDigit = { digit ->
-        if (pinValue.length < maxDigits) {
-            onPinChanged(pinValue + digit)
-        }
-    },
-    validateEnabled = pinValue.length >= minDigits,
-    onValidate = onPrimaryAction,
-    backSpaceOrClose = pinValue.isNotEmpty(),
-    onClear = {
-        if (pinValue.isEmpty()) onDismiss()
-        else onPinChanged("")
+    pinLockOptions = PinLockOptions.defaultPinLockOptions,
+    modifier = Modifier.padding(bottom = 80.dp),
+    onValidate = { pinString ->
+
     }
 )
 ```
-
-## Preview
-
-<p float="left">
-  <img src="/Preview/preview1.gif" width="32%" />
-  <img src="/Preview/preview2.gif" width="32%" />
-  <img src="/Preview/preview3.gif" width="32%" />
-</p>
 
 ## How to clone and add credentials
 
@@ -135,4 +106,17 @@ echo YOUR_PASSWORD > creds/passwd.txt
 - Paste the username given to `creds/maven_username.txt`
 - Paste the password given to `creds/maven_password.txt`
 
-5. you can now publish to maven by using `./gradlew publish` or triggering the workflow
+5. Export public keys 
+
+```bash
+gpg --keyserver keyserver.ubuntu.com --send-keys YOUR_KEY_ID
+```
+
+6. Verify export
+
+```bash
+gpg --keyserver keyserver.ubuntu.com --recv-keys YOUR_KEY_ID
+```
+
+
+7. you can now publish to maven by using `./gradlew publish` or triggering the workflow
