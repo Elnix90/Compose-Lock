@@ -6,6 +6,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -14,148 +15,193 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
-import io.github.elnix90.lock.patttern.ComposeLockCallback
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import io.github.elnix90.lock.patttern.Dot
 import io.github.elnix90.lock.patttern.Line
+import io.github.elnix90.lock.patttern.PatternLockOptions
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import kotlin.time.Duration.Companion.milliseconds
+
+private class PatternLockSystem(
+    private val scope: CoroutineScope,
+    private val patternLockOptions: PatternLockOptions,
+    density: Density
+) {
+    private val _dots: MutableStateFlow<List<Dot>> = MutableStateFlow(emptyList())
+    val dots = _dots.asStateFlow()
+
+    private val _connectedLines: MutableStateFlow<List<Line>> = MutableStateFlow(emptyList())
+    val connectedLines = _connectedLines.asStateFlow()
+
+    private val _connectedDotsIds: MutableStateFlow<List<Int>> = MutableStateFlow(emptyList())
+    val connectedDotsIds = _connectedDotsIds.asStateFlow()
+
+    private val dimension = patternLockOptions.dimension
+    private val sensitivity = with(density) {
+        patternLockOptions.sensitivity.toPx()
+    }
+    private val dotsSize = with(density) {
+        patternLockOptions.dotsSize.toPx()
+    }
+
+
+    fun init(layoutCoordinates: LayoutCoordinates) {
+        val width = layoutCoordinates.size.width
+
+        val realDimension = dimension + 1
+        val spaceBetweenDots = (width / realDimension).toFloat()
+
+        repeat(dimension) { widthIndex ->
+            repeat(dimension) { heightIndex ->
+                val dotOffset = Offset(
+                    x = spaceBetweenDots * (widthIndex + 1),
+                    y = spaceBetweenDots * (heightIndex + 1)
+                )
+
+                _dots.value += Dot(
+                    id = heightIndex * patternLockOptions.dimension + widthIndex,
+                    offset = dotOffset,
+                    size = Animatable(dotsSize)
+                )
+            }
+        }
+    }
+
+
+    fun clear() {
+        _connectedDotsIds.value = emptyList()
+        _connectedLines.value = emptyList()
+
+        _dots.value.forEach { dot ->
+            scope.launch {
+                dot.size.animateTo(
+                    targetValue = dotsSize,
+                    animationSpec = tween(patternLockOptions.animationDurationMs)
+                )
+            }
+        }
+    }
+
+    fun onDrag(pos: Offset) {
+        for (dot in _dots.value) {
+            if (dot.id !in _connectedDotsIds.value) {
+                if (
+                    pos.x in (dot.offset.x - sensitivity)..(dot.offset.x + sensitivity) &&
+                    pos.y in (dot.offset.y - sensitivity)..(dot.offset.y + sensitivity)
+                ) {
+                    if (_connectedDotsIds.value.isNotEmpty()) {
+                        _connectedLines.value += Line(
+                            start = _dots.value.first { it.id == _connectedDotsIds.value.last() }.offset,
+                            end = dot.offset
+                        )
+                    }
+                    _connectedDotsIds.value += dot.id
+
+                    scope.launch {
+                        dot.size.animateTo(
+                            targetValue = (dotsSize * 1.8f),
+                            animationSpec = tween(patternLockOptions.animationDurationMs)
+                        )
+                        delay(patternLockOptions.animationDelayMs.milliseconds)
+                        dot.size.animateTo(dotsSize, tween(patternLockOptions.animationDurationMs))
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 public fun PatternLock(
     modifier: Modifier = Modifier,
-    dimension: Int,
-    sensitivity: Float,
-    dotsColor: Color,
-    dotsSize: Float,
-    linesColor: Color,
-    linesStroke: Float,
-    animationDuration: Int = 200,
-    animationDelay: Long = 100,
-    callback: ComposeLockCallback
+    patternLockOptions: PatternLockOptions,
+    onFinished: (String) -> Unit
 ) {
-    require(dimension >= 2) { "Dimension must be >= 2" }
-
+    val density = LocalDensity.current
     val scope = rememberCoroutineScope()
 
-    val dotsList = remember(dimension) { mutableListOf<Dot>() }
-    val connectedLines = remember(dimension) { mutableListOf<Line>() }
-    val connectedDots = remember(dimension) { mutableListOf<Dot>() }
+    val system = remember {
+        PatternLockSystem(
+            scope = scope + SupervisorJob(),
+            patternLockOptions = patternLockOptions,
+            density = density
+        )
+    }
+
+    val dotsList by system.dots.collectAsState()
+    val connectedLines by system.connectedLines.collectAsState()
+    val connectedDotsIds by system.connectedDotsIds.collectAsState()
+
     var currentOffset: Offset? by remember { mutableStateOf(null) }
 
     Canvas(
         modifier
             .aspectRatio(1f)
-            .pointerInput(dimension) {
+            .pointerInput(patternLockOptions.dimension) {
                 detectDragGestures(
                     onDragStart = {},
                     onDragEnd = {
-                        callback.onResult(connectedDots)
-                        connectedLines.clear()
-                        connectedDots.clear()
+                        system.clear()
+                        onFinished(connectedDotsIds.joinToString("") { it.toString() })
                     },
                     onDragCancel = {
-                        connectedLines.clear()
-                        connectedDots.clear()
+                        system.clear()
                     },
                     onDrag = { change, _ ->
-                        val pos = change.position
-
-                        currentOffset = pos
-
-                        for (dot in dotsList) {
-                            if (dot.id !in connectedDots.map { it.id }) {
-                                if (
-                                    pos.x in (dot.offset.x - sensitivity)..(dot.offset.x + sensitivity) &&
-                                    pos.y in (dot.offset.y - sensitivity)..(dot.offset.y + sensitivity)
-                                ) {
-                                    if (connectedDots.isNotEmpty()) {
-                                        connectedLines.add(
-                                            Line(
-                                                start = connectedDots.last().offset,
-                                                end = dot.offset
-                                            )
-                                        )
-                                    }
-                                    callback.onDotConnected(dot)
-                                    connectedDots.add(dot)
-                                    scope.launch {
-                                        dot.size.animateTo(
-                                            (dotsSize * 1.8).toFloat(),
-                                            tween(animationDuration)
-                                        )
-                                        delay(animationDelay.milliseconds)
-                                        dot.size.animateTo(dotsSize, tween(animationDuration))
-                                    }
-                                }
-                            }
-                        }
+                        currentOffset = change.position
+                        system.onDrag(change.position)
                     }
                 )
             }
-            .onGloballyPositioned { layoutCoordinates ->
-                val size = layoutCoordinates.size
-                val realDimension = dimension + 1
-
-                val spaceBetweenWidthDots = (size.width / realDimension).toFloat()
-                val spaceBetweenHeightDots = (size.height / realDimension).toFloat()
-
-                val dotsOnWidth = arrayOfNulls<Int>(realDimension * realDimension)
-                val dotsOnHeight = arrayOfNulls<Int>(realDimension * realDimension)
-
-                dotsOnWidth.forEachIndexed { widthIndex, _ ->
-                    val readWidthIndex = widthIndex + 1
-                    dotsOnHeight.forEachIndexed { heightIndex, _ ->
-                        val readHeightIndex = heightIndex + 1
-                        if (readWidthIndex < realDimension && readHeightIndex < realDimension) {
-                            if (dotsList.count() < dimension * dimension) {
-
-                                val dotOffset = Offset(
-                                    x = spaceBetweenWidthDots * readWidthIndex,
-                                    y = spaceBetweenHeightDots * readHeightIndex
-                                )
-
-                                dotsList.add(
-                                    Dot(
-                                        id = heightIndex * dimension + widthIndex,
-                                        offset = dotOffset,
-                                        size = Animatable(dotsSize)
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            .onGloballyPositioned(system::init)
     ) {
-        if (currentOffset != null && connectedDots.isNotEmpty()) {
+        val stroke = patternLockOptions.linesStroke.toPx()
+
+        if (currentOffset != null && connectedDotsIds.isNotEmpty()) {
             drawLine(
-                color = linesColor,
-                start = connectedDots.last().offset,
+                color = patternLockOptions.linesColor,
+                start = dotsList.first { it.id == connectedDotsIds.last() }.offset,
                 end = currentOffset!!,
-                strokeWidth = linesStroke,
+                strokeWidth = stroke,
                 cap = StrokeCap.Round
             )
         }
 
         for (dot in dotsList) {
             drawCircle(
-                color = dotsColor,
+                color = patternLockOptions.dotsColor,
                 radius = dot.size.value,
                 center = dot.offset
             )
+
+            if (patternLockOptions.showSensibility) {
+                drawCircle(
+                    color = patternLockOptions.dotsColor.copy(0.5f),
+                    radius = patternLockOptions.sensitivity.toPx(),
+                    center = dot.offset
+                )
+            }
         }
 
         for (line in connectedLines) {
             drawLine(
-                color = linesColor,
+                color = patternLockOptions.linesColor,
                 start = line.start,
                 end = line.end,
-                strokeWidth = linesStroke,
+                strokeWidth = stroke,
                 cap = StrokeCap.Round
             )
         }
