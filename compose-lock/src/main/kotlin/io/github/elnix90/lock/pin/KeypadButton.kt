@@ -1,33 +1,46 @@
 package io.github.elnix90.lock.pin
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import io.github.elnix90.lock.R
+import io.github.elnix90.lock.pin.configuration.KeyPadSettings
 
 @Composable
 internal fun KeypadButton(
-    modifier: Modifier = Modifier,
     icon: Int,
-    tint: Color,
-    enabled: Boolean = true,
+    keyPadSettings: KeyPadSettings,
+    onLongClick: (() -> Unit)?,
     onClick: () -> Unit
 ) {
+    val state = rememberKeyPadState(
+        keyPadSettings = keyPadSettings,
+        specialBg = true,
+        onLongClick = onLongClick,
+        onClick = onClick
+    )
 
     Box(
-        modifier = modifier.keyPadModifier(enabled, onClick),
+        modifier = state.modifier,
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            painterResource(id = icon),
+            painter = painterResource(id = icon),
             contentDescription = null,
-            tint = tint
+            tint = state.animatedTextColor.value,
+            modifier = Modifier.size(35.dp)
         )
     }
 }
@@ -35,20 +48,32 @@ internal fun KeypadButton(
 @Composable
 internal fun KeypadButton(
     text: String,
-    modifier: Modifier = Modifier,
+    keyPadSettings: KeyPadSettings,
     onClick: (String) -> Unit,
 ) {
+    val state = rememberKeyPadState(
+        keyPadSettings = keyPadSettings,
+        specialBg = false,
+        onLongClick = null
+    ) { onClick(text) }
 
     Box(
-        modifier = modifier.keyPadModifier { onClick(text) },
+        modifier = state.modifier,
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
-            color = MaterialTheme.colorScheme.onSurface,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold
+            color = state.animatedTextColor.value,
+            style = TextStyle(
+                fontSize = if (state.isPressed) 32.sp else 30.sp,
+                fontWeight = FontWeight.Black,
+                fontFamily = FontFamily(Font(R.font.roboto_mono_variable)),
+            ),
+            modifier = Modifier.graphicsLayer {
+                if (state.isPressed) {
+                    scaleX = 0.9f
+                }
+            }
         )
     }
 }
-
