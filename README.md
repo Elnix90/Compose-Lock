@@ -75,6 +75,17 @@ PinLock(
 )
 ```
 
+
+# Test the library
+
+I use this library in [Dragon Launcher](https://github.com/Elnix90/Dragon-Launcher)
+If you want to test it, download the app and follow the instructions below:
+
+| Go to settings                                                                                           | Go to Behavior                                                                                           | Enable lock method                                                                                               |
+|----------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| ![Go To Settings](https://raw.githubusercontent.com/Elnix90/Compose-Lock/main/assets/go_to_settings.jpg) | ![Go To Behavior](https://raw.githubusercontent.com/Elnix90/Compose-Lock/main/assets/go_to_behavior.jpg) | ![Enable lock method](https://raw.githubusercontent.com/Elnix90/Compose-Lock/main/assets/enable_lock_method.jpg) | 
+
+
 ## How to clone and add credentials
 
 1. Generate the key
