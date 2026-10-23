@@ -11,21 +11,20 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.graphics.shapes.Morph
 
 internal class MorphPolygonShape(
-    private val morph: Morph,
-    private val percentage: Float
+	private val morph: Morph,
+	private val percentage: Float
 ) : Shape {
+	private val matrix = Matrix()
 
-    private val matrix = Matrix()
-
-    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-    override fun createOutline(
-        size: Size,
-        layoutDirection: LayoutDirection,
-        density: Density
-    ): Outline {
-        matrix.scale(size.width, size.height)
-        val path = morph.toPath(progress = percentage)
-        path.transform(matrix)
-        return Outline.Generic(path)
-    }
+	@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+	override fun createOutline(
+		size: Size,
+		layoutDirection: LayoutDirection,
+		density: Density
+	): Outline {
+		matrix.scale(size.width, size.height)
+		val path = morph.toPath(progress = percentage)
+		path.transform(matrix)
+		return Outline.Generic(path)
+	}
 }

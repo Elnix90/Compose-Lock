@@ -8,16 +8,16 @@ import io.github.elnix90.lock.pin.pinMaterialShapes
 
 @Immutable
 public data class PinIndicatorOptions(
-    val pinShapes: Set<RoundedPolygon>,
-    val shapesSize: Dp,
-    val shapesSpacing: Dp
+	val pinShapes: Set<RoundedPolygon>,
+	val shapesSize: Dp,
+	val shapesSpacing: Dp
 ) {
-    public companion object {
-        public val defaultPinIndicatorOptions: PinIndicatorOptions
-            get() = PinIndicatorOptions(
-                pinShapes = pinMaterialShapes,
-                shapesSize = 15.dp,
-                shapesSpacing = 15.dp
-            )
-    }
+	public companion object {
+		public val defaultPinIndicatorOptions: PinIndicatorOptions
+			get() = PinIndicatorOptions(
+				pinShapes = pinMaterialShapes,
+				shapesSize = 15.dp,
+				shapesSpacing = 15.dp
+			)
+	}
 }
